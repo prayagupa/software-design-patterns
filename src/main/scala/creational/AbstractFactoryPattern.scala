@@ -1,0 +1,5 @@
+package creational
+
+object AbstractFactoryPattern {
+
+}
