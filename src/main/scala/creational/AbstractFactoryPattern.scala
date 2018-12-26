@@ -1,5 +1,9 @@
 package creational
 
-object AbstractFactoryPattern {
+object AbstractFactoryPatternClient {
+
+  def main(args: Array[String]): Unit = {
+
+  }
 
 }
