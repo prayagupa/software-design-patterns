@@ -1,31 +1,46 @@
 package behavioural
 
+final case class CustomerSupportRequest(problem: String,
+                                        location: String,
+                                        phoneNumber: String)
+
+object publisherApi {
+
+  import monix.reactive._
+  import concurrent.duration._
+
+  val requestStream: Observable[CustomerSupportRequest] = Observable.repeat {
+    CustomerSupportRequest(
+      problem = "lights do not turn on",
+      location = "first hill",
+      phoneNumber = "111-111-1111"
+    )
+  }
+}
+
+object consumerApi {
+  import monix.execution.{Ack, Scheduler}
+  import monix.reactive.observers.Subscriber
+  import scala.concurrent.Future
+
+  val requestSubscriber = new Subscriber[CustomerSupportRequest] {
+    implicit def scheduler: Scheduler = monix.execution.Scheduler.Implicits.global
+
+    def onNext(request: CustomerSupportRequest): Future[Ack] = {
+      println("helping with : " + request)
+      Ack.Continue
+    }
+
+    def onError(ex: Throwable): Unit = println(s"error: $ex")
+
+    def onComplete(): Unit = println("complete")
+  }
+}
+
 object ObservablePatternClient {
 
   def main(args: Array[String]): Unit = {
-    // We need a Scheduler in scope in order to make
-    // the Observable produce elements when subscribed
-    import monix.execution.Scheduler.Implicits.global
-    import monix.reactive._
 
-    import concurrent.duration._
-
-    // We first build an observable that emits a tick per second,
-    // the series of elements being an auto-incremented long
-    // Filtering out odd numbers, making it emit every 2 seconds
-    // We then make it emit the same element twice
-    // This stream would be infinite, so we limit it to 10 items
-    val publisher = Observable.interval(1.second)
-      .filter(_ % 2 == 0)
-      .flatMap(x => Observable(x, x))
-      .take(20)
-
-    // Observables are lazy, nothing happens until you subscribe...
-    // On consuming it, we want to dump the contents to stdout
-    // for debugging purposes
-    // Finally, start consuming it
-    val cancelable = publisher
-      .dump("O")
-      .subscribe()
+    val program = publisherApi.requestStream.subscribe(consumerApi.requestSubscriber)
   }
 }
