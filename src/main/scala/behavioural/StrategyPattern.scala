@@ -1,0 +1,5 @@
+package behavioural
+
+class StrategyPattern {
+
+}
