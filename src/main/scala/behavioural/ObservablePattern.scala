@@ -2,8 +2,6 @@ package behavioural
 
 import java.time.LocalDateTime
 
-import scala.concurrent.ExecutionContext
-
 final case class CustomerSupportRequest(problem: String,
                                         location: String,
                                         phoneNumber: String,
@@ -32,12 +30,12 @@ object publisherApi {
   //https://typelevel.org/cats-effect/concurrency/mvar.html
   type Stream[A] = MVar[IO, Option[A]]
 
-  def requestStreamV2(stream: Stream[Int], list: List[Int]): IO[Unit] =
+  def requestStreamV2IO(stream: Stream[Int], list: List[Int]): IO[Unit] =
     list match {
       case Nil =>
         stream.put(None)
       case head :: tail =>
-        stream.put(Some(head)).flatMap(_ => requestStreamV2(stream, tail))
+        stream.put(Some(head)).flatMap(_ => requestStreamV2IO(stream, tail))
     }
 }
 
@@ -64,10 +62,10 @@ object consumerApi {
   import cats.effect.concurrent._
   import cats.syntax.all._
 
-  def requestSubscriberV2(stream: Stream[Int], sum: Long): IO[Long] =
+  def requestSubscriberV2IO(stream: Stream[Int], sum: Long): IO[Long] =
     stream.take.flatMap {
       case Some(x) =>
-        requestSubscriberV2(stream, sum + x)
+        requestSubscriberV2IO(stream, sum + x)
       case None =>
         IO.pure(sum)
     }
@@ -87,16 +85,20 @@ object ObservablePatternClient {
     import cats.effect.concurrent._
     import cats.syntax.all._
 
+    //ContextShift required for
+    // 1) MVar.apply
+    // 2) IO.start
+    import scala.concurrent.ExecutionContext
     implicit val cs = IO.contextShift(ExecutionContext.Implicits.global)
 
     val programV2 = for {
       stream <- MVar[IO].empty[Option[Int]]
       count = 100000
-      producerTask = requestStreamV2(stream, (0 until count).toList)
-      subscriptionTask = requestSubscriberV2(stream, 0L)
+      producerTask = requestStreamV2IO(stream, (0 until count).toList)
+      subscriptionTask = requestSubscriberV2IO(stream, 0L)
 
-      producerFiber  <- producerTask.start
-      subscriptionFiber  <- subscriptionTask.start
+      producerFiber  <- producerTask.start(cs)
+      subscriptionFiber  <- subscriptionTask.start(cs)
       _   <- producerFiber.join
       sum <- subscriptionFiber.join
     } yield sum

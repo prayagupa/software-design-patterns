@@ -3,6 +3,9 @@ package structural
 import java.time.LocalDateTime
 import java.util.UUID
 
+/**
+  * Use Proxy for lazy initialization
+  */
 object flightApi {
   final case class Flight(id: String,
                           airlines: String,
