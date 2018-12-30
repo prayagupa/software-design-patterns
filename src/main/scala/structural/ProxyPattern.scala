@@ -5,6 +5,15 @@ import java.util.UUID
 
 /**
   * Use Proxy for lazy initialization
+  * 
+  * scala> def x = println("how can i help you")
+  * x: Unit
+  *
+  * scala> lazy val y = x
+  * y: Unit = <lazy>
+  *
+  * scala> y
+  * how can i help you
   */
 object flightApi {
   final case class Flight(id: String,
@@ -42,16 +51,18 @@ object flightProxyApi {
 
     private var cache = Map[(String, String), List[Flight]]()
 
-    def getFlights(from: String, to: String): List[flightApi.Flight] =
-      if(cache.contains((from, to))) {
+    def getFlights(from: String, to: String): List[flightApi.Flight] = {
+      lazy val flights = FlightServiceV1.getFlights(from, to)
+
+      if (cache.contains((from, to))) {
         cache((from, to))
       } else {
-        val flights = FlightServiceV1.getFlights(from, to)
         Future {
           cache += (from, to) -> flights
         }
         flights
       }
+    }
 
     Task.schedule({
       println(s"before: $cache")
