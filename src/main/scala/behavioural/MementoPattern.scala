@@ -2,7 +2,7 @@ package behavioural
 
 object api {
 
-  case class Content(fileName: String, content: String)
+  final case class Content(fileName: String, content: String)
 
   class Transaction(var contentFinalState: Content) {
     def commit(buffer: Buffer): Content = {
