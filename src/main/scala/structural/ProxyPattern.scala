@@ -5,7 +5,7 @@ import java.util.UUID
 
 /**
   * Use Proxy for lazy initialization
-  * 
+  *
   * scala> def x = println("how can i help you")
   * x: Unit
   *

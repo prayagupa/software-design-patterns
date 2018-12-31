@@ -1,6 +1,6 @@
-package behavioural
+package structural
 
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.LoggerFactory
 
 /**
   * https://nlp.stanford.edu/projects/glove/
@@ -16,11 +16,12 @@ object languageApi {
     def findNearestWords(documentName: String, word: String): List[String]
   }
 
-  import org.nd4j.linalg.io.ClassPathResource
+  import org.deeplearning4j.models.glove.Glove
   import org.deeplearning4j.text.sentenceiterator.BasicLineIterator
   import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.CommonPreprocessor
   import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory
-  import org.deeplearning4j.models.glove.Glove
+  import org.nd4j.linalg.io.ClassPathResource
+
   import scala.collection.JavaConverters._
 
   class NearestWordsImpl extends NearestWords {
@@ -53,7 +54,6 @@ object languageApi {
       words.asScala.toList
     }
   }
-
 
 }
 

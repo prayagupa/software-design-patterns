@@ -1,4 +1,4 @@
-package behavioural
+package structural
 
 /**
   * Use sharing to support large numbers of fine-grained objects efficiently.
