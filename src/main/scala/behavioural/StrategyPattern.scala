@@ -22,25 +22,45 @@ object faceDetectionApiV1 {
   import org.opencv.imgcodecs.Imgcodecs
   import org.opencv.imgproc.Imgproc
 
+  // install opencv3.4.5 on macos
+  // brew install ant
+  // brew install opencv3 --with-java --with-python3 // did not work
+  // brew install --build-from-source opencv3
+  // https://opencv-java-tutorials.readthedocs.io/en/latest/01-installing-opencv-for-java.html
+
+  //  ll /usr/local/Cellar/opencv/3.4.5/share/OpenCV/java/
+  //  total 4904
+  //  -rwxr-xr-x  1 a1353612  admin  1800008 Dec 31 16:30 libopencv_java345.dylib
+  //  -rw-r--r--  1 a1353612  admin   707562 Dec 31 16:21 opencv-345.jar
+  //FIXME Exception in thread "main" java.lang.UnsatisfiedLinkError: no opencv_java320 in java.library.path
+
+  //run
+  // sbt -Djava.library.path=/usr/local/Cellar/opencv/3.4.5/share/OpenCV/java/ "runMain behavioural.StrategyPatternClient"
   class FaceDetectionInstanceV1 extends FaceDetectorService {
 
-    println(System.getProperty("java.library.path"))
-    System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
+    private val Root = "/usr/local/Cellar/opencv/3.4.5/share/OpenCV/"
+    private val FrontFaceTrainingData = "lbpcascades/lbpcascade_frontalface.xml"
+    private val FrontFaceTrainingResource = getClass.getClassLoader.getResource(FrontFaceTrainingData).getPath
+
+    println("[INFO] java.library.path: " + System.getProperty("java.library.path"))
+    println("[INFO] FrontFaceTrainingResource: " + FrontFaceTrainingResource)
+
+    System.loadLibrary("opencv_java345")
 
     def detectFaces(inputImageUrl: URL): String = {
-      val inputImage = Imgcodecs.imread(inputImageUrl.getPath)
+      println("[INFO]: input image " + inputImageUrl.getPath)
+      val inputImage: Mat = Imgcodecs.imread(inputImageUrl.getPath)
 
-      val classifier = new CascadeClassifier(
-        getClass.getResource("data/lbpcascades/lbpcascade_frontalface.xml").getPath)
+      val classifier = new CascadeClassifier(Root + FrontFaceTrainingData)
       val faceDetections = new MatOfRect()
       classifier.detectMultiScale(inputImage, faceDetections)
 
       // Drawing boxes
-      for (rect <- faceDetections.toArray()) {
+      for (detectedFaceCoOrd <- faceDetections.toArray) {
         Imgproc.rectangle(
           inputImage,
-          new Point(rect.x, rect.y),
-          new Point(rect.x + rect.width, rect.y + rect.height),
+          new Point(detectedFaceCoOrd.x, detectedFaceCoOrd.y),
+          new Point(detectedFaceCoOrd.x + detectedFaceCoOrd.width, detectedFaceCoOrd.y + detectedFaceCoOrd.height),
           new Scalar(0, 255, 0)
         )
       }
@@ -53,6 +73,16 @@ object faceDetectionApiV1 {
   }
 }
 
+object FaceDetectionApiV2 {
+
+  class FaceDetectionInstanceV2 extends FaceDetectorService {
+
+    override def detectFaces(inputImage: URL): String = ???
+
+  }
+
+}
+
 object client {
 
   import faceDetectionApiV1._
@@ -62,11 +92,11 @@ object client {
   }
 }
 
-object StrategyPattern {
+object StrategyPatternClient {
 
   import client.ApplicationConfig._
 
   def main(args: Array[String]): Unit = {
-    detectionInstance.detectFaces(getClass.getResource("PorcupineTree.jpg"))
+    detectionInstance.detectFaces(getClass.getClassLoader.getResource("PorcupineTree.jpg"))
   }
 }

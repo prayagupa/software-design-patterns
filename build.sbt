@@ -14,7 +14,7 @@ libraryDependencies ++= Seq(
   "org.deeplearning4j" % "deeplearning4j-nlp" % DeeplearningVersion,
   "org.nd4j" % "nd4j-native-platform" % DeeplearningVersion,
 
-  "org.openpnp" % "opencv" % "2.4.9-8",
+  "org.openpnp" % "opencv" % "3.2.0-0",
 
   "org.slf4j" % "slf4j-api" % "1.8.0-beta2",
   "org.slf4j" % "slf4j-simple" % "1.8.0-beta2"
