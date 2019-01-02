@@ -6,7 +6,7 @@ import java.net.URL
 // v2 http://openimaj.org/tutorial/index.html
 
 trait FaceDetectorService {
-  def detectFaces(inputImage: URL): String
+  def detectFaces(inputImage: URL, outputImageName: String): String
 }
 
 object faceDetectionApiV1 {
@@ -39,20 +39,23 @@ object faceDetectionApiV1 {
   class FaceDetectionInstanceV1 extends FaceDetectorService {
 
     private val Root = "/usr/local/Cellar/opencv/3.4.5/share/OpenCV/"
-    private val FrontFaceTrainingData = "lbpcascades/lbpcascade_frontalface.xml"
-    private val FrontFaceTrainingResource = getClass.getClassLoader.getResource(FrontFaceTrainingData).getPath
+    private val FrontFaceTrainingData1 = "lbpcascades/lbpcascade_frontalface.xml"
+    private val FrontFaceTrainingData2 = "haarcascades/haarcascade_frontalface_default.xml"
+    private val FrontFaceTrainingData3 = "haarcascades/haarcascade_frontalface_alt.xml"
+    //private val FrontFaceTrainingResource = getClass.getClassLoader.getResource(FrontFaceTrainingData).getPath
 
     println("[INFO] java.library.path: " + System.getProperty("java.library.path"))
-    println("[INFO] FrontFaceTrainingResource: " + FrontFaceTrainingResource)
+    println("[INFO] FrontFaceTrainingResource: " + Root + FrontFaceTrainingData3)
 
     System.loadLibrary("opencv_java345")
 
-    def detectFaces(inputImageUrl: URL): String = {
-      println("[INFO]: input image " + inputImageUrl.getPath)
+    def detectFaces(inputImageUrl: URL, destination: String): String = {
+      println("[INFO]: input image " + inputImageUrl)
       val inputImage: Mat = Imgcodecs.imread(inputImageUrl.getPath)
 
-      val classifier = new CascadeClassifier(Root + FrontFaceTrainingData)
       val faceDetections = new MatOfRect()
+
+      val classifier = new CascadeClassifier(Root + FrontFaceTrainingData3)
       classifier.detectMultiScale(inputImage, faceDetections)
 
       // Drawing boxes
@@ -65,7 +68,7 @@ object faceDetectionApiV1 {
         )
       }
 
-      val newImageFile = inputImageUrl.getPath + "-detect.jpg"
+      val newImageFile = destination
       Imgcodecs.imwrite(newImageFile, inputImage)
 
       newImageFile
@@ -73,11 +76,35 @@ object faceDetectionApiV1 {
   }
 }
 
-object FaceDetectionApiV2 {
+object faceDetectionApiV2 {
+
+  import org.openimaj.image.FImage
+  import org.openimaj.image.ImageUtilities
+  import org.openimaj.image.processing.face.detection.DetectedFace
+  import org.openimaj.image.processing.face.detection.HaarCascadeDetector
+  import org.openimaj.image.DisplayUtilities
 
   class FaceDetectionInstanceV2 extends FaceDetectorService {
 
-    override def detectFaces(inputImage: URL): String = ???
+    override def detectFaces(inputImage: URL, dest: String): String = {
+      val detector = new HaarCascadeDetector()
+
+      val file = ImageUtilities.readF(inputImage)
+      val faces = detector.detectFaces(file).iterator()
+
+      while (faces.hasNext) {
+        println("Image:\n")
+        val face = faces.next()
+        val image1: FImage = face.getFacePatch
+        val bi = ImageUtilities.createBufferedImage(image1)
+
+        println(image1.getContentArea)
+        DisplayUtilities.display(image1)
+      }
+
+      //FIXME
+      dest
+    }
 
   }
 
@@ -86,9 +113,10 @@ object FaceDetectionApiV2 {
 object client {
 
   import faceDetectionApiV1._
+  import faceDetectionApiV2._
 
   object ApplicationConfig {
-    lazy val detectionInstance: FaceDetectorService = new FaceDetectionInstanceV1
+    lazy val detectionInstance: FaceDetectorService = new FaceDetectionInstanceV2
   }
 }
 
@@ -97,6 +125,10 @@ object StrategyPatternClient {
   import client.ApplicationConfig._
 
   def main(args: Array[String]): Unit = {
-    detectionInstance.detectFaces(getClass.getClassLoader.getResource("PorcupineTree.jpg"))
+    detectionInstance.detectFaces(
+      getClass.getClassLoader.getResource("PorcupineTree.jpg"),
+      "destination1.jpg"
+    )
+
   }
 }
