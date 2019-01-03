@@ -61,11 +61,19 @@ object DecoratorPatternClient {
 
   import languageApi._
 
+  val ProfanityWords = Set(
+    "f",
+    "a",
+    "p"
+  )
+
   class NearestWordsExtension(nearestWordsInstance: NearestWords) {
 
     def findNearestWords(fileName: String, word: String): List[String] = {
-      println("some stuff")
-      nearestWordsInstance.findNearestWords(fileName, word)
+      if(!ProfanityWords.contains(word))
+        nearestWordsInstance.findNearestWords(fileName, word)
+      else
+        List.empty
     }
   }
 
